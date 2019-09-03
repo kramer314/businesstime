@@ -30,6 +30,7 @@ class BusinessTime(object):
         start = datetime.datetime.combine(arbitrary_date, business_hours[0])
         end = datetime.datetime.combine(arbitrary_date, business_hours[1])
         self.open_hours = end - start
+        self.open_seconds = self.open_hours.total_seconds()
 
     def isweekend(self, dt):
         return dt.weekday() in self.weekends
@@ -62,6 +63,10 @@ class BusinessTime(object):
         """
         curr = datetime.datetime.combine(d1, datetime.time())
         end = datetime.datetime.combine(d2, datetime.time())
+        # HACK: handle case where both d1 and d2 are after business hours on subsequent business days
+        if (d2.time() > self.business_hours[1]):
+            end += datetime.timedelta(days=1)
+
         if d1.date() == d2.date():
             yield curr
             return
@@ -127,13 +132,12 @@ class BusinessTime(object):
     def businesstimedelta(self, d1, d2):
         """
         Returns a datetime.timedelta with the number of full business days
-        and business time between d1 and d2
+        and business time (seconds) between d1 and d2
         """
 
+        timedelta_invert = False
         if d1 > d2:
-            d1, d2, timedelta_direction = d2, d1, -1
-        else:
-            timedelta_direction = 1
+            d1, d2, timedelta_invert = d2, d1, True
         businessdays = self._build_spanning_datetimes(d1, d2)
         time = datetime.timedelta()
 
@@ -175,14 +179,28 @@ class BusinessTime(object):
                 count += 1
                 prev = current
 
-        return time * timedelta_direction
+        # manually normalize record and handle inverting timedelta
+        (business_days, business_seconds) = divmod(time.days * self.open_seconds + time.seconds,
+                                                   self.open_seconds)
+        if (timedelta_invert):
+            if (business_seconds > 0):
+                timedelta = datetime.timedelta(days=-(business_days + 1),
+                                               seconds=self.open_seconds-business_seconds)
+            else:
+                timedelta = datetime.timedelta(days=-business_days)
+        else:
+            timedelta = datetime.timedelta(days=business_days,
+                                           seconds=business_seconds)
+        return timedelta
 
     def businesstime_hours(self, d1, d2):
         """
-        Returns a datetime.timedelta of business hours between d1 and d2,
-        based on the length of the businessday 
+        Returns a datetime.timedelta of the business time between d1 and d2, where
+        timedelta.total_seconds() is accurate.
+
+        Note: timedeltas are automatically normalized to a 24-hour day. This
+        function name is a bit misleading. To convert to business hours, divide
+        the returned timedelta.total_seconds() by 3600.
         """
-        open_hours = self.open_hours.seconds / 3600
         btd = self.businesstimedelta(d1, d2)
-        btd_hours = btd.seconds / 3600
-        return datetime.timedelta(hours=(btd.days * open_hours + btd_hours))
+        return datetime.timedelta(seconds=(btd.days * self.open_seconds + btd.seconds))

@@ -88,6 +88,8 @@ class BusinessTimeTest(unittest.TestCase):
         end = datetime(2014, 1, 22, 10, 0)
         self.assertEqual(
             self.bt.businesstimedelta(start, end), timedelta(days=2, hours=1))
+        self.assertEqual(
+            self.bt.businesstimedelta(end, start), timedelta(days=-3, hours=7))
 
     def test_businesstimedelta_1_minute_after_during(self):
         """https://github.com/seatgeek/businesstime/issues/7"""
@@ -96,22 +98,32 @@ class BusinessTimeTest(unittest.TestCase):
         self.assertEqual(
             self.bt.businesstimedelta(start, end),
             timedelta(hours=5, minutes=20))
+        self.assertEqual(
+            self.bt.businesstimedelta(end, start),
+            timedelta(days=-1, hours=2, minutes=40))
         start = datetime(2015, 2, 23, 17, 1)
         self.assertEqual(
             self.bt.businesstimedelta(start, end),
             timedelta(hours=5, minutes=20))
+        self.assertEqual(
+            self.bt.businesstimedelta(end, start),
+            timedelta(days=-1, hours=2, minutes=40))
 
     def test_businesstimedelta_nonbusiness_after(self):
         start = datetime(2014, 1, 12, 12)
         end = datetime(2014, 1, 17, 19, 30)
         self.assertEqual(
-            self.bt.businesstimedelta(start, end), timedelta(days=4, hours=8))
+            self.bt.businesstimedelta(start, end), timedelta(days=5))
+        self.assertEqual(
+            self.bt.businesstimedelta(end, start), timedelta(days=-5))
 
     def test_businesstimedelta_before_after(self):
         start = datetime(2014, 1, 13, 4)
         end = datetime(2014, 1, 17, 19, 30)
         self.assertEqual(
-            self.bt.businesstimedelta(start, end), timedelta(days=4, hours=8))
+            self.bt.businesstimedelta(start, end), timedelta(days=5))
+        self.assertEqual(
+            self.bt.businesstimedelta(end, start), timedelta(days=-5))
 
     def test_businesstimedelta_during_after(self):
         start = datetime(2014, 1, 30, 12, 15)
@@ -119,42 +131,69 @@ class BusinessTimeTest(unittest.TestCase):
         self.assertEqual(
             self.bt.businesstimedelta(start, end),
             timedelta(days=1, hours=4, minutes=45))
+        self.assertEqual(
+            self.bt.businesstimedelta(end, start),
+            timedelta(days=-2, hours=3, minutes=15))
 
     def test_businesstimedelta_during_before(self):
         start = datetime(2014, 8, 4, 11)
         end = datetime(2014, 8, 6, 5)
         self.assertEqual(
             self.bt.businesstimedelta(start, end), timedelta(days=1, hours=6))
+        self.assertEqual(
+            self.bt.businesstimedelta(end, start), timedelta(days=-2, hours=2))
 
     def test_businesstimedelta_before_before(self):
         start = datetime(2014, 8, 4, 1)
         end = datetime(2014, 8, 4, 5)
         self.assertEqual(
             self.bt.businesstimedelta(start, end), timedelta(days=0))
+        self.assertEqual(
+            self.bt.businesstimedelta(end, start), timedelta(days=0))
 
     def test_businesstimedelta_after_after(self):
         start = datetime(2014, 8, 4, 22)
         end = datetime(2014, 8, 4, 23)
         self.assertEqual(
             self.bt.businesstimedelta(start, end), timedelta(days=0))
+        self.assertEqual(
+            self.bt.businesstimedelta(end, start), timedelta(days=0))
+
+    def test_businestimedelta_after_after2(self):
+        """
+        Test for https://github.com/seatgeek/businesstime/issues/23
+        """
+        start = datetime(2014, 8, 4, 22)
+        end = datetime(2014, 8, 5, 23)
+        self.assertEqual(
+            self.bt.businesstimedelta(start, end), timedelta(days=1))
+        self.assertEqual(
+            self.bt.businesstimedelta(end, start), timedelta(days=-1))
 
     def test_businesstimedelta_during_nonbusiness(self):
         start = datetime(2014, 1, 10, 16, 15)
         end = datetime(2014, 1, 12, 12, 30)
         self.assertEqual(
             self.bt.businesstimedelta(start, end), timedelta(minutes=45))
+        self.assertEqual(
+            self.bt.businesstimedelta(end, start),
+            timedelta(days=-1, hours=7, minutes=15))
 
     def test_businesstimedelta_during_nonbusiness2(self):
         start = datetime(2014, 1, 9, 16, 15)
         end = datetime(2014, 1, 12, 12, 30)
         self.assertEqual(
-            self.bt.businesstimedelta(start, end), timedelta(
-                days=1, minutes=45))
+            self.bt.businesstimedelta(start, end),
+            timedelta(days=1, minutes=45))
+        self.assertEqual(
+            self.bt.businesstimedelta(end, start),
+            timedelta(days=-2, hours=7, minutes=15))
 
     def test_businesstimedelta_after_nonbusiness(self):
         start = datetime(2014, 1, 10, 17, 15)
         end = datetime(2014, 1, 12, 12, 30)
         self.assertEqual(self.bt.businesstimedelta(start, end), timedelta())
+        self.assertEqual(self.bt.businesstimedelta(end, start), timedelta())
 
     def test_businesstimedelta_during_during(self):
         start = datetime(2014, 1, 2, 9, 12)
@@ -162,30 +201,42 @@ class BusinessTimeTest(unittest.TestCase):
         self.assertEqual(
             self.bt.businesstimedelta(start, end),
             timedelta(hours=7, minutes=58))
+        self.assertEqual(
+            self.bt.businesstimedelta(end, start),
+            timedelta(days=-1, minutes=2))
 
     def test_businesstimedelta_during_during2(self):
         start = datetime(2014, 1, 2, 9, 10)
         end = datetime(2014, 1, 3, 9, 12)
         self.assertEqual(
-            self.bt.businesstimedelta(start, end), timedelta(
-                days=1, minutes=2))
+            self.bt.businesstimedelta(start, end),
+            timedelta(days=1, minutes=2))
+        self.assertEqual(
+            self.bt.businesstimedelta(end, start),
+            timedelta(days=-2, hours=7, minutes=58))
 
     def test_businesstimedelta_during_during3(self):
         start = datetime(2014, 1, 2, 9, 10)
         end = datetime(2014, 1, 2, 9, 12)
         self.assertEqual(
             self.bt.businesstimedelta(start, end), timedelta(minutes=2))
+        self.assertEqual(
+            self.bt.businesstimedelta(end, start),
+            timedelta(days=-1, hours=7, minutes=58))
 
     def test_businesstimedelta_nonbusiness_nonbusiness(self):
         start = datetime(2014, 1, 4, 9, 10)
         end = datetime(2014, 1, 4, 9, 12)
         self.assertEqual(self.bt.businesstimedelta(start, end), timedelta())
-
+        self.assertEqual(self.bt.businesstimedelta(end, start), timedelta())
+        
     def test_businesstimedelta_exactly_one_day(self):
         start = datetime(2014, 1, 7, 10)
         end = datetime(2014, 1, 8, 10)
         self.assertEqual(
             self.bt.businesstimedelta(start, end), timedelta(days=1))
+        self.assertEqual(
+            self.bt.businesstimedelta(end, start), timedelta(days=-1))
 
     def test_businesstimedelta_exactly_one_day2(self):
         """
@@ -195,31 +246,24 @@ class BusinessTimeTest(unittest.TestCase):
         end = datetime(2014, 1, 8, 9)
         self.assertEqual(
             self.bt.businesstimedelta(start, end), timedelta(days=1))
-
-    def test_businesstimedelta_during_during_reverse(self):
-        end = datetime(2014, 1, 2, 9, 12)
-        start = datetime(2014, 1, 3, 9, 10)
         self.assertEqual(
-            self.bt.businesstimedelta(start, end),
-            timedelta(hours=-7, minutes=-58))
+            self.bt.businesstimedelta(end, start), timedelta(days=-1))
 
     def test_businesstime_hours_exactly_one_day(self):
         start = datetime(2014, 1, 16, 9, 0)
         end = datetime(2014, 1, 17, 9, 0)
         self.assertEqual(
             self.bt.businesstime_hours(start, end), timedelta(hours=8))
+        self.assertEqual(
+            self.bt.businesstime_hours(end, start), timedelta(hours=-8))
 
     def test_businesstime_hours_one_day(self):
         start = datetime(2014, 1, 16, 9, 0)
         end = datetime(2014, 1, 17, 15, 0)
         self.assertEqual(
             self.bt.businesstime_hours(start, end), timedelta(hours=14))
-
-    def test_businesstime_hours_one_day_reverse(self):
-        start = datetime(2014, 1, 17, 9, 0)
-        end = datetime(2014, 1, 16, 9, 0)
         self.assertEqual(
-            self.bt.businesstime_hours(start, end), timedelta(hours=-8))
+            self.bt.businesstime_hours(end, start), timedelta(hours=-14))
 
     def test_businesstime_out_of_hours_start(self):
         """
@@ -229,6 +273,8 @@ class BusinessTimeTest(unittest.TestCase):
         end = datetime(2014, 8, 11, 17, 0)
         self.assertEqual(
             self.bt.businesstime_hours(start, end), timedelta(hours=8))
+        self.assertEqual(
+            self.bt.businesstime_hours(end, start), timedelta(hours=-8))
 
     def test_businesstime_out_of_hours_start_end(self):
         """
@@ -238,6 +284,8 @@ class BusinessTimeTest(unittest.TestCase):
         end = datetime(2014, 8, 11, 23, 0)
         self.assertEqual(
             self.bt.businesstime_hours(start, end), timedelta(hours=8))
+        self.assertEqual(
+            self.bt.businesstime_hours(end, start), timedelta(hours=-8))
 
     def test_businesstime_out_of_hours_end(self):
         """
@@ -247,6 +295,8 @@ class BusinessTimeTest(unittest.TestCase):
         end = datetime(2014, 8, 11, 23, 0)
         self.assertEqual(
             self.bt.businesstime_hours(start, end), timedelta(hours=16))
+        self.assertEqual(
+            self.bt.businesstime_hours(end, start), timedelta(hours=-16))
 
     def test_businesstime_holidays_date_desc(self):
         """
